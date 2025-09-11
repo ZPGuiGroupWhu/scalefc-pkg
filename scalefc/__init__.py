@@ -4,9 +4,55 @@ import pandas as pd
 import click
 from pathlib import Path
 from datetime import datetime
+from urllib.parse import urlparse
+import requests
 from .scalefc import flow_cluster_scalefc
 
 __all__ = ["flow_cluster_scalefc"]
+
+def validate_input_path(ctx, param, value):
+    """Custom validator for input file path that supports both local files and URLs.
+    
+    Args:
+        ctx: Click context
+        param: Click parameter
+        value: Input value to validate
+        
+    Returns:
+        str or Path: Validated path or URL
+        
+    Raises:
+        click.BadParameter: If the path/URL is invalid
+    """
+    if not value:
+        return value
+        
+    # Check if it's a URL
+    parsed = urlparse(str(value))
+    if parsed.scheme in ('http', 'https'):
+        # It's a HTTP/HTTPS URL, validate accessibility
+        try:
+            response = requests.head(str(value), timeout=10, allow_redirects=True)
+            if response.status_code >= 400:
+                raise click.BadParameter(f"URL '{value}' returned status code {response.status_code}")
+            return str(value)
+        except requests.RequestException as e:
+            raise click.BadParameter(f"Cannot access URL '{value}': {e}")
+    elif parsed.scheme in ('ftp', 'ftps'):
+        # FTP URLs - let pandas handle them
+        return str(value)
+    elif parsed.scheme and parsed.scheme not in ('file', ''):
+        # Other schemes like s3://, gs:// etc. - return as string
+        return str(value)
+    else:
+        # It's a local path, validate existence
+        try:
+            path = Path(value)
+            if not path.exists():
+                raise click.BadParameter(f"File '{value}' does not exist.")
+            return path
+        except Exception as e:
+            raise click.BadParameter(f"Invalid path '{value}': {e}")
 
 def log_message(message: str, level: str = "INFO", verbose: bool = True, force: bool = False):
     """Print formatted log message with timestamp and color.
@@ -35,8 +81,8 @@ def log_message(message: str, level: str = "INFO", verbose: bool = True, force: 
 @click.option(
     "-f", "--file", "--od-file", "input_file",
     required=True,
-    type=click.Path(exists=True, path_type=Path),
-    help="Input OD flow file (txt or csv). Must be Nx4 or Nx5 matrix with columns [ox,oy,dx,dy] or [ox,oy,dx,dy,label]."
+    callback=validate_input_path,
+    help="Input OD flow file (txt or csv) or URL. Supports: 1) Local files, 2) HTTP/HTTPS URLs, 3) FTP URLs, 4) Cloud storage URLs (s3://, gs://, etc.). Must be Nx4 or Nx5 matrix with columns [ox,oy,dx,dy] or [ox,oy,dx,dy,label]."
 )
 @click.option(
     "-s", "--scale-factor",
@@ -99,7 +145,7 @@ def log_message(message: str, level: str = "INFO", verbose: bool = True, force: 
     help="Enable verbose mode to show detailed processing information."
 )
 def cli(
-    input_file: Path,
+    input_file,
     scale_factor: float,
     min_flows: int,
     scale_factor_func: str,
@@ -117,21 +163,30 @@ def cli(
     Paper link: https://doi.org/10.1016/j.compenvurbsys.2025.102338
     
     This tool performs flow clustering on Origin-Destination (OD) flow data using
-    the ScaleFC algorithm. The input file should contain flow coordinates in the
-    format [ox, oy, dx, dy] or [ox, oy, dx, dy, label].
+    the ScaleFC algorithm. The input can be:
+    - Local files: /path/to/file.csv or C:\\path\\to\\file.csv
+    - HTTP/HTTPS URLs: https://example.com/data.csv
+    - FTP URLs: ftp://server.com/data.csv
+    - Cloud storage: s3://bucket/data.csv, gs://bucket/data.csv
+    
+    The input file should contain flow coordinates in the format [ox, oy, dx, dy] or [ox, oy, dx, dy, label].
     """
     try:
         # Load input data
         try:
+            # Determine if input is URL or local path for logging
+            input_type = "URL" if isinstance(input_file, str) and urlparse(input_file).scheme else "file"
+            log_message(f"Reading data from {input_type}: {input_file}", "DEBUG", verbose)
+            
             # Try to read with header first
             df = pd.read_csv(input_file)
             if set(df.columns[:4]) == {'ox', 'oy', 'dx', 'dy'}:
                 # Has proper header
                 od_data = df[['ox', 'oy', 'dx', 'dy']].values
                 if len(df.columns) == 5 and 'label' in df.columns:
-                    log_message(f"Input file has {len(df)} flows with existing labels.", "DEBUG", verbose)
+                    log_message(f"Input {input_type} has {len(df)} flows with existing labels.", "DEBUG", verbose)
                 elif len(df.columns) == 4:
-                    log_message(f"Input file has {len(df)} flows without labels.", "DEBUG", verbose)
+                    log_message(f"Input {input_type} has {len(df)} flows without labels.", "DEBUG", verbose)
                 else:
                     raise ValueError("Invalid number of columns. Expected 4 or 5 columns.")
             else:
@@ -140,9 +195,9 @@ def cli(
                 if df.shape[1] not in [4, 5]:
                     raise ValueError(f"Invalid number of columns: {df.shape[1]}. Expected 4 or 5.")
                 od_data = df.iloc[:, :4].values
-                log_message(f"Input file has {len(df)} flows (no header detected).", "DEBUG", verbose)
+                log_message(f"Input {input_type} has {len(df)} flows (no header detected).", "DEBUG", verbose)
         except Exception as e:
-            log_message(f"Error reading CSV file: {e}", "ERROR", verbose, force=True)
+            log_message(f"Error reading data from {input_file}: {e}", "ERROR", verbose, force=True)
             sys.exit(1)
         
         # Validate data
@@ -188,7 +243,14 @@ def cli(
                 # Determine output file path
                 if output.is_dir():
                     # If output is a directory, generate filename based on input file
-                    input_stem = input_file.stem
+                    if isinstance(input_file, str) and urlparse(input_file).scheme:
+                        # Input is URL, extract filename from URL path
+                        parsed_url = urlparse(input_file)
+                        url_path = Path(parsed_url.path)
+                        input_stem = url_path.stem if url_path.stem else "url_data"
+                    else:
+                        # Input is local file
+                        input_stem = input_file.stem
                     output_file = output / f"{input_stem}-clustering-result.csv"
                     output.mkdir(parents=True, exist_ok=True)
                 else:
