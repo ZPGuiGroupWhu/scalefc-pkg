@@ -20,8 +20,6 @@
 
 **Paper Title**: `ScaleFC: A scale-aware geographical flow clustering algorithm for heterogeneous origin-destination data`
 
-**Download Link**: [PDF](https://raw.githubusercontent.com/ZPGuiGroupWhu/scalefc-pkg/refs/heads/main/data/ScaleFC-A%20scale-aware%20geographical%20flow%20clustering%20algorithm%20for%20heterogeneous%20origin-destination%20data.pdf)
-
 
 
 This study proposes a scale-aware geographical flow clustering method (ScaleFC) to address flow clustering problems caused by heterogeneous geographical flow characteristics such as uneven length, heterogeneous density, and weak connectivity. The method introduces a scale factor to adjust the neighborhood search range for flows of different lengths, balancing the identification of both short- and long-distance flow clusters. Meanwhile, inspired by boundary-seeking clustering, ScaleFC introduces partitioning flows (boundary flows between adjacent flow clusters) to identify density-heterogeneous flow clusters and separate weakly-connected flow clusters. As shown in the figure below, the method consists of `4` steps:

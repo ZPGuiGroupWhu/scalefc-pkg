@@ -18,9 +18,6 @@
 
 **论文题目**：`ScaleFC: A scale-aware geographical flow clustering algorithm for heterogeneous origin-destination data`
 
-***下载链接**：[PDF](https://raw.githubusercontent.com/ZPGuiGroupWhu/scalefc-pkg/refs/heads/main/data/ScaleFC-A%20scale-aware%20geographical%20flow%20clustering%20algorithm%20for%20heterogeneous%20origin-destination%20data.pdf)
-
-
 
 本研究提出一种尺度感知的地理流聚类方法（ScaleFC），以解决长度不均、密度异质和弱连接等异质地理流特征引发的流聚类问题。该方法引入尺度因子调节不同长度流的邻居搜索范围，以兼顾长短距离流簇识别。同时，受边界检测聚类的启发，引入分割流（流簇间的边界流）识别密度异质流簇，并分离弱连接流簇。如下图所示，方法包含`4`个步骤：
 
