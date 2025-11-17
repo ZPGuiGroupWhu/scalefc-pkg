@@ -78,7 +78,7 @@ pip install -e .
 
 ## 离线安装
 
-在[pypi]()上下载编译好的`wheel`包，然后使用`pip`安装即可。例如安装包为`scalefc-0.1.0-py3-none-any.whl`，则安装命令为：
+在[pypi](https://pypi.org/project/scalefc/#files)上下载编译好的`wheel`包，然后使用`pip`安装即可。例如安装包为`scalefc-0.1.0-py3-none-any.whl`，则安装命令为：
 
 ```shell
 pip install scalefc-0.1.0-py3-none-any.whl

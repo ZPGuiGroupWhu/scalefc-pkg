@@ -81,7 +81,7 @@ After that, use `git pull` to pull the latest code to get the latest algorithm p
 
 ## Offline Installation
 
-Download the compiled `wheel` package from [pypi]() and then install using `pip`. For example, if the installation package is `scalefc-0.1.0-py3-none-any.whl`, the installation command is:
+Download the compiled `wheel` package from [pypi](https://pypi.org/project/scalefc/#files) and then install using `pip`. For example, if the installation package is `scalefc-0.1.0-py3-none-any.whl`, the installation command is:
 
 ```shell
 pip install scalefc-0.1.0-py3-none-any.whl

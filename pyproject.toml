@@ -1,6 +1,6 @@
 [project]
 name = "scalefc"
-version = "0.1.0"
+version = "0.1.1"
 description = "The official implementation of ScaleFC algorithm for geographical flow (OD flow) data."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -53,8 +53,3 @@ dev = [
     "dask[complete]>=2025.5.1",
     "matplotlib>=3.10.3",
 ]
-
-
-https://github.com/ZPGuiGroupWhu/sude/raw/master/github.png
-
-https://raw.githubusercontent.com/ZPGuiGroupWhu/SUDE-pkg/refs/heads/main/image/sude.jpg

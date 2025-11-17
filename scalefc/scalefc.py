@@ -593,7 +593,7 @@ def flow_cluster_scalefc(
     # from dask.distributed import LocalCluster
     # dask_cluster = LocalCluster(n_workers=6, threads_per_worker=2, processes=True)
     # client = dask_cluster.get_client()
-    with Parallel(n_jobs=n_jobs, ackend=parallel_backend) as parallel:
+    with Parallel(n_jobs=n_jobs, backend=parallel_backend) as parallel:
         while waited_subgroups_indices_queue:
 
             results = parallel(
